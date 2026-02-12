@@ -1,17 +1,21 @@
 // scan email and get the required data for analysis
 
-export function extractUrls(emailContent: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)/gi;
-  // THE MATCH
-  const matches = emailContent.match(urlRegex) || [];
+export function extractUrls(text: string): string[] {
+  //  Standard URLs (http://...)
+  const standardUrlRegex = /(https?:\/\/[^\s"'>]+)/gi;
+  
+  // Hidden HTML links (href="...")
+  const htmlHrefRegex = /href=["'](https?:\/\/[^"']+)["']/gi;
 
-  // CLEANING & UNIQUENESS
-  const cleanUrls = matches.map((url) => {
-    // Remove common trailing punctuation that gets caught in the regex
-    // "Check out https://scam.com." -> removes the "." at the end
-    return url.replace(/[.,!?;:)]+$/, "");
-  });
-  //  DEDUPLICATION
-  // Set automatically deletes duplicates. We then turn it back into an Array.
+  const standardMatches = text.match(standardUrlRegex) || [];
+  
+  // For the HTML regex, we need to "map" it to get just the link inside the quotes
+  const htmlMatches = Array.from(text.matchAll(htmlHrefRegex), m => m[1]);
+
+  // Combine both lists
+  const allMatches = [...standardMatches, ...htmlMatches];
+
+  // Clean and Deduplicate (same as before)
+  const cleanUrls = allMatches.map(url => url.replace(/[.,!?;:)]+$/, ""));
   return Array.from(new Set(cleanUrls));
 }
