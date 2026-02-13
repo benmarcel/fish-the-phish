@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { extractUrls } from "@/lib/scanner";
 import { getDomain } from "@/lib/utils";
 import { checkUrlReputation } from "@/lib/detectors/vt-check";
+import { checkDomainAge } from "@/lib/detectors/whois-check";
 export async function POST(request: Request) {
   try {
     // Parse the incoming request body as JSON
@@ -25,8 +26,14 @@ const suspectUrls = urls.slice(0, 5);
   }));
 const reportResults = [];
 for (const url of suspectUrls) {
-  const report = await checkUrlReputation(url);
-  reportResults.push(report);
+const domain = getDomain(url);
+  
+  // Run both checks in parallel for speed
+  const [vtReport, domainReport] = await Promise.all([
+    checkUrlReputation(url),
+    domain ? checkDomainAge(domain) : Promise.resolve(null)
+  ]);
+  reportResults.push({ url, vtReport, domainReport });
 }
 console.log(reportResults)
 return NextResponse.json({ 
