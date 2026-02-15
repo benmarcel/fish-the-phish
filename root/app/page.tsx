@@ -8,28 +8,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-interface AnalysisResult {
-  url: string;
-  domain: string;
-}
+import ThreatDisplay from "@/components/ThreatDisplay";
+import { AnalysisResponse } from "@/lib/types";
+import { analyzeEmail } from "@/lib/api";
 export default function Home() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult[] | null>(null);
+  const [result, setResult] = useState<AnalysisResponse | null>(null);
 
   const handleAnalyze = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      const data = await response.json();
-      setResult(data.matches);
+      const response = await analyzeEmail(content);
+      if (response.success) {
+        setResult(response);
+      } else {
+        setError("Analysis failed. Please try again.");
+      }
     } catch (error) {
       console.error("Error analyzing content:", error);
     } finally {
@@ -41,6 +41,13 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-950 text-slate-50">
       {/* Header Section */}
+      {/* error message */}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}  
       <div className="flex flex-col items-center mb-10 text-center">
         <div className="bg-blue-600/20 p-3 rounded-full mb-4">
           <ShieldCheck className="w-12 h-12 text-blue-500" />
@@ -86,28 +93,8 @@ export default function Home() {
         </CardContent>
       </Card>
       {/* result  */}
-      {result && (
-        <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-slate-100">Analysis Result</CardTitle>
-            <CardDescription>
-              Detected URLs and their domains.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {result.length > 0 ? (
-              result.map((item, index) => (
-                <div key={index} className="p-3 bg-slate-800 rounded">
-                  <p className="text-sm text-slate-300">{item.url}</p>
-                  <p className="text-xs text-slate-500">{item.domain}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-green-500">No URLs detected. Message looks clean!</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {result && <ThreatDisplay data={result} />}
+      
       {/* Footer Disclaimer */}
       <p className="mt-8 text-xs text-slate-500 uppercase tracking-widest">
         Stateless Processing • No Data Stored

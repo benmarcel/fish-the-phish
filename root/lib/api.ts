@@ -1,13 +1,12 @@
 import axios from "axios";
 
-const API_URL = "https://api.virustotal.com/vtapi/v2/url/report";
-
-export async function getUrlReport(url: string) {
-  const response = await axios.get(API_URL, {
-    params: {
-      apikey: process.env.VT_API_KEY,
-      resource: url,
-    },
-  });
-  return response.data;
+// generalized API function to call our backend Next.js API route
+export async function analyzeEmail(content: string) {
+  try {
+    const response = await axios.post("/api/analyze", { content });
+    return response.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
 }
