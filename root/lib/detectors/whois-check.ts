@@ -1,42 +1,45 @@
-import whois from 'whois-json';
+// import whois from 'whois-json';
 
-export interface DomainAgeResult {
-  domain: string;
-  ageInDays: number | null;
-  creationDate: string | null;
-  isNew: boolean; // True if less than 30 days old
-}
-
-export async function checkDomainAge(domain: string): Promise<DomainAgeResult> {
+export async function checkDomainAge(domain: string) {
   try {
-    const result = await whois(domain);
+    // 1. Call the API Ninjas Whois endpoint
+    const response = await fetch(`https://api.api-ninjas.com/v1/whois?domain=${domain}`, {
+      method: 'GET',
+      headers: {
+        'X-Api-Key': process.env.API_NINJAS_KEY || '',
+      },
+    });
 
-    // WHOIS data is messy. Different registrars use different keys.
-    // We check the most common ones.
-    let creationDateStr;
-    if (Array.isArray(result)) {
-      creationDateStr = result[0]?.data?.creationDate || null;
-    } else {
-      creationDateStr = result.creationDate || null;
+    if (!response.ok) {
+      throw new Error(`API Ninjas error: ${response.statusText}`);
     }
 
-    if (!creationDateStr) {
-      return { domain, ageInDays: null, creationDate: null, isNew: false };
+    const data = await response.json();
+
+    // 2. Handle cases where the domain isn't found or has no date
+    if (!data.creation_date) {
+      return {
+        domain,
+        ageInDays: null,
+        creationDate: null,
+        isNew: false
+      };
     }
 
-    const created = new Date(creationDateStr);
+    // 3. Calculate the age (API Ninjas returns seconds, so we multiply by 1000 for JS)
+    const creationDate = new Date(data.creation_date * 1000);
     const now = new Date();
-    
-    // Calculate the difference in milliseconds and convert to days
-    const diffTime = Math.abs(now.getTime() - created.getTime());
-    const ageInDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffInMs = now.getTime() - creationDate.getTime();
+    const ageInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
     return {
       domain,
       ageInDays,
-      creationDate: created.toISOString(),
-      isNew: ageInDays <= 30 // A domain younger than 30 days is "High Risk"
+      creationDate: creationDate.toISOString(),
+      // Flag as "New" if the domain is less than 30 days old (Phishing Trap!)
+      isNew: ageInDays <= 30 
     };
+
   } catch (error) {
     console.error(`WHOIS error for ${domain}:`, error);
     return { domain, ageInDays: null, creationDate: null, isNew: false };

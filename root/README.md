@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fish-the-Phish: AI-Powered Email Forensics
+
+**Fish-the-Phish** is a sophisticated security tool that deconstructs suspicious emails using a multi-layered forensic approach. It combines real-time URL reputation checks, domain age verification, and Large Language Model (LLM) analysis to determine if an email is a phishing attempt.
+
+---
+
+## Key Features
+
+* **Link Extraction:** Automatically pulls all URLs from raw email text.
+* **Multi-Source Forensics:**
+* **VirusTotal API:** Checks live URL reputation against 70+ antivirus engines.
+* **WHOIS Forensics:** Analyzes domain registration dates to catch "burn-and-turn" phishing domains.
+
+
+* **AI Intelligence Layer:** Uses **Groq (Llama 3.3 70B)** to analyze the psychological triggers (urgency, fear, greed) and technical discrepancies in the content.
+* **⚡ High Performance:** Implements parallel API calling and Groq’s ultra-fast LPU inference.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Frontend** | Next.js 15 (App Router), Tailwind CSS, Shadcn/UI |
+| **Backend** | Next.js API Routes (Edge-ready) |
+| **AI Brain** | Groq Llama 3.3 70B (OpenAI-compatible SDK) |
+| **Forensics** | VirusTotal API, API Ninjas (WHOIS) |
+| **Icons** | Lucide React |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/benmarcel/fish-the-phish.git
+cd fish-the-phish
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install or 
+bun install or 
+pnpm install 
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
 
-## Learn More
+### 3. Environment Setup
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env` file and add your keys:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+VIRUSTOTAL_API_KEY=your_key_here
+API_NINJAS_KEY=your_key_here
+GROQ_API_KEY=your_key_here
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
 
-## Deploy on Vercel
+### 4. Run Development Server
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev or 
+bun run dev or 
+pnpm run dev
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+
+---
+
+## System Architecture
+
+1. **Input:** User pastes raw email text.
+2. **Extraction:** Regex patterns identify all unique URLs.
+3. **Technical Scan:** * `Promise.all` executes VirusTotal and WHOIS checks in parallel.
+* Domain "newness" is calculated (flagged if < 30 days).
+4. **AI Analysis:** The raw text + technical findings are sent to **Groq**.
+5. **Output:** A structured `AnalysisResponse` object is returned to the UI.
+
+---
+
+## Example Output
+
+```json
+{
+  "threatLevel": "high",
+  "summary": "Urgent account security phish.",
+  "analysis": "Uses a typosquatted domain (amaz0n) and false urgency.",
+  "verdict": "Do not click. Report and delete."
+}
+
+```
+
+---
+
+## Challenges Overcome
+
+* **OpenAI Quota Limitations:** Transitioned from OpenAI to **Groq** to provide a high-speed, cost-effective free tier for the project.
+* **WHOIS Timeouts:** Replaced standard Port 43 WHOIS lookups (which are often blocked by ISPs/Cloud providers) with an HTTPS-based REST API for 100% reliability.
+* **LLM JSON Consistency:** Implemented strict system prompting and JSON-mode validation to ensure the frontend never crashes on malformed AI responses.
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

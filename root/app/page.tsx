@@ -62,7 +62,7 @@ export default function Home() {
       </div>
 
       {/* Main Analysis Card */}
-      <Card className="w-full max-w-2xl bg-slate-900 border-slate-800">
+      <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 mb-4">
         <CardHeader>
           <CardTitle className="text-lg text-slate-100">Scan Center</CardTitle>
           <CardDescription>
@@ -77,7 +77,7 @@ export default function Home() {
             onChange={(e) => setContent(e.target.value)}
           />
           <Button
-            className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-6 text-lg"
+            className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-6 text-lg "
             onClick={handleAnalyze}
             disabled={loading}
           >
